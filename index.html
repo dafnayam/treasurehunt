@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>משחק מצא את המטמון</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Heebo', sans-serif; }
+        .treasure-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .station-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .correct-answer {
+            animation: correctPulse 0.6s ease-in-out;
+        }
+        .wrong-answer {
+            animation: wrongShake 0.5s ease-in-out;
+        }
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes wrongShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="treasure-bg min-h-screen"><!-- מסך בחירת קבוצה -->
+  <div id="teamSelectionScreen" class="min-h-screen flex items-center justify-center p-4">
+   <div class="station-card rounded-3xl p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+     <div class="text-6xl mb-4">
+      🏴‍☠️
+     </div>
+     <h1 class="text-3xl font-bold text-gray-800 mb-2">משחק מצא את המטמון</h1>
+     <p class="text-gray-600 mb-6">בחרו את הקבוצה שלכם</p>
+    </div>
+    <div class="space-y-3"><button onclick="selectTeam('א')" class="team-btn w-full bg-gradient-to-r from-red-500 to-pink-600 text-white font-bold py-4 px-6 rounded-xl hover:from-red-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"> 🔴 קבוצה א </button> <button onclick="selectTeam('ב')" class="team-btn w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200"> 🔵 קבוצה ב </button> <button onclick="selectTeam('ג')" class="team-btn w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200"> 🟢 קבוצה ג </button> <button onclick="selectTeam('ד')" class="team-btn w-full bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-bold py-4 px-6 rounded-xl hover:from-yellow-600 hover:to-orange-700 transform hover:scale-105 transition-all duration-200"> 🟡 קבוצה ד </button> <button onclick="selectTeam('ה')" class="team-btn w-full bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-4 px-6 rounded-xl hover:from-purple-600 hover:to-violet-700 transform hover:scale-105 transition-all duration-200"> 🟣 קבוצה ה </button>
+    </div>
+   </div>
+  </div><!-- מסך פתיחה -->
+  <div id="startScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+   <div class="station-card rounded-3xl p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+     <div class="text-6xl mb-4">
+      🏴‍☠️
+     </div>
+     <h1 class="text-3xl font-bold text-gray-800 mb-2">משחק מצא את המטמון</h1>
+     <h2 class="text-xl font-bold text-purple-600 mb-2" id="selectedTeamDisplay">קבוצה א</h2>
+     <p class="text-gray-600">הכינו את עצמכם להרפתקה מרגשת!</p>
+    </div>
+    <div class="space-y-4">
+     <div><label class="block text-sm font-medium text-gray-700 mb-2">שמות חברי הקבוצה</label> <input type="text" id="teamMembers" placeholder="הכניסו את שמות החברים..." class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none" oninput="checkTeamMembers()">
+     </div><button id="instructionsBtn" onclick="showInstructions()" class="hidden w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200"> 📋 הנחיות המשחק </button>
+     <div id="gameCodeSection" class="hidden">
+      <div><label class="block text-sm font-medium text-gray-700 mb-2">קוד משחק</label> <input type="text" id="gameCode" placeholder="הכניסו קוד משחק..." class="w-full p-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+      </div><button onclick="startGame()" class="w-full mt-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"> 🚀 התחל משחק </button>
+     </div><button onclick="goBackToTeamSelection()" class="w-full bg-gray-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-600 transform hover:scale-105 transition-all duration-200"> ← חזור לבחירת קבוצה </button>
+    </div>
+   </div>
+  </div><!-- מסך הנחיות -->
+  <div id="instructionsScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+   <div class="station-card rounded-3xl p-8 w-full max-w-2xl">
+    <div class="text-center mb-6">
+     <div class="text-4xl mb-4">
+      📋
+     </div>
+     <h1 class="text-2xl font-bold text-gray-800 mb-4">הנחיות המשחק</h1>
+    </div>
+    <div class="text-right space-y-4 text-gray-700 leading-relaxed">
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">1.</span>
+      <p>זהו את המיקום שבתמונה והגיעו אליו בזריזות ובזהירות.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">2.</span>
+      <p>חפשו את הקוד המספרי והכניסו אותו לאפליקציה.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">3.</span>
+      <p>לאחר הכנסת הקוד תופיע שאלה – רשמו את התשובה שלכם.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">4.</span>
+      <p>לכל תשובה יש 3 ניסיונות מענה.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">5.</span>
+      <p>אם יש יחידות, רשמו את סמל היחידות ללא רווח (למשל 172J).</p>
+     </div>
+     <div class="flex items-start"><span class="text-red-600 font-bold ml-3">⚠️</span>
+      <p><strong>כל ניסיון נוסף עלול להפחית את הניקוד.</strong></p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">6.</span>
+      <p>תשובה נכונה תוביל לתמונה של התחנה הבאה. חזרו על התהליך עד לתחנה האחרונה.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">7.</span>
+      <p>המשחק כולל <strong>8 תחנות</strong>.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">8.</span>
+      <p>תעדו את הפתרונות שלכם במחברת הכיתה.</p>
+     </div>
+     <div class="flex items-start"><span class="text-purple-600 font-bold ml-3">9.</span>
+      <p>הניקוד המצטבר יוצג בסיום התחנה השמינית.</p>
+     </div>
+    </div>
+    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-2xl my-6 text-center">
+     <h3 class="text-xl font-bold mb-2">🎯 מטרה</h3>
+     <p class="text-lg">מי ימצא את המטמון ראשון?</p>
+    </div>
+    <div class="text-center">
+     <h3 class="text-2xl font-bold text-green-600 mb-4">🚀 צאו לדרך!</h3><button onclick="closeInstructions()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200"> ✅ הבנתי, בואו נתחיל! </button>
+    </div>
+   </div>
+  </div><!-- מסך משחק -->
+  <div id="gameScreen" class="hidden min-h-screen p-4"><!-- כותרת עליונה -->
+   <div class="bg-white/90 backdrop-blur rounded-2xl p-4 mb-4 flex justify-between items-center">
+    <div>
+     <h2 class="text-xl font-bold text-gray-800" id="teamName">קבוצה א</h2>
+     <p class="text-sm text-gray-600" id="teamMembersDisplay"></p>
+    </div>
+    <div class="text-center">
+     <div class="text-lg font-bold text-green-600" id="gameTimer">
+      00:00
+     </div>
+     <div class="text-xs text-gray-500">
+      זמן
+     </div>
+    </div>
+    <div class="text-center">
+     <div class="text-2xl font-bold text-purple-600" id="currentScore">
+      0
+     </div>
+     <div class="text-xs text-gray-500">
+      נקודות
+     </div>
+    </div>
+    <div class="text-center">
+     <div class="text-lg font-bold text-blue-600" id="stationCounter">
+      1/8
+     </div>
+     <div class="text-xs text-gray-500">
+      תחנה
+     </div>
+    </div>
+   </div><!-- כרטיס תחנה -->
+   <div class="station-card rounded-3xl p-6"><!-- הכנסת קוד תחנה -->
+    <div id="stationCodeInput" class="text-center">
+     <div class="text-4xl mb-4">
+      🗺️
+     </div>
+     <h3 class="text-4xl mb-4" id="stationEmoji">🧪</h3>
+     <p id="locationInstruction" class="text-lg font-semibold text-purple-700 mb-4 text-center" style="display: none;">זהו את המקום שבתמונה והגיעו אליו בזהירות ובזריזות</p><img id="stationLocationImage" src="" alt="מיקום התחנה" class="w-full max-h-80 object-contain rounded-xl mb-4 bg-gray-50" style="display: none;">
+     <p class="text-gray-600 mb-6">חפשו במקום את קוד התחנה והקלידו בתיבה</p><input type="text" id="stationCode" placeholder="קוד התחנה..." class="w-full p-4 text-center text-xl border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none mb-4"> <button onclick="checkStationCode()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200"> ✅ אמת קוד </button>
+    </div><!-- שאלת התחנה -->
+    <div id="stationQuestion" class="hidden">
+     <div class="mb-6"><img id="stationImage" src="" alt="תמונת התחנה" class="w-full max-h-64 object-contain rounded-xl mb-4 bg-gray-50">
+      <div class="text-xl font-bold text-gray-800 mb-4 whitespace-pre-line" id="questionText"></div>
+     </div><!-- תשובות רב ברירה -->
+     <div id="multipleChoice" class="space-y-3 mb-6"><button class="answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200" onclick="selectAnswer(0)"></button> <button class="answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200" onclick="selectAnswer(1)"></button> <button class="answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200" onclick="selectAnswer(2)"></button> <button class="answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200" onclick="selectAnswer(3)"></button>
+     </div><!-- תשובה פתוחה -->
+     <div id="openAnswer" class="hidden mb-6"><input type="text" id="openAnswerInput" placeholder="הכניסו את התשובה..." class="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none" disabled="false">
+     </div><button onclick="submitAnswer()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-6 rounded-xl hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all duration-200"> 📝 שלח תשובה </button> <!-- משוב -->
+     <div id="feedback" class="hidden mt-6 p-4 rounded-xl text-center font-bold"></div><!-- כפתור המשך --> <button id="nextButton" onclick="nextStation()" class="hidden w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"> ➡️ התחנה הבאה </button>
+    </div>
+   </div>
+  </div><!-- מסך סיום -->
+  <div id="endScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+   <div class="station-card rounded-3xl p-8 w-full max-w-md text-center">
+    <div class="text-6xl mb-6">
+     🏆
+    </div>
+    <h1 class="text-3xl font-bold text-gray-800 mb-4" id="congratsMessage">כל הכבוד!</h1>
+    <h2 class="text-2xl font-bold text-purple-600 mb-4">הגעתם למטמון! 🎉</h2>
+    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-6 rounded-2xl mb-6">
+     <div class="text-sm mb-2">
+      הניקוד הכולל שלכם:
+     </div>
+     <div class="text-4xl font-bold" id="finalScore">
+      0
+     </div>
+     <div class="text-sm">
+      נקודות
+     </div>
+    </div>
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 rounded-2xl mb-6">
+     <div class="text-sm mb-1">
+      זמן סיום:
+     </div>
+     <div class="text-2xl font-bold" id="finalTime">
+      00:00
+     </div>
+    </div>
+    <p class="text-gray-600 mb-6" id="finalMessage"></p>
+   </div>
+  </div>
+  <script>
+        // נתוני המשחק
+        const gameData = {
+            teams: ['א', 'ב', 'ג', 'ד', 'ה'],
+            stationOrders: {
+                'א': [1,2,3,4,5,6,7,8],
+                'ב': [3,4,5,6,7,1,2,8],
+                'ג': [5,6,7,1,2,3,4,8],
+                'ד': [7,1,2,3,4,5,6,8],
+                'ה': [4,5,6,7,1,2,3,8]
+            },
+            stations: {
+                1: {
+                    code: "48217",
+                    emoji: "🧪",
+                    locationImage: "https://i.imgur.com/hLQdp1Q.jpg",
+                    question: "לפניכם 4 בקבוקים שכל אחד מהם מכיל 1 מול יסוד ממשפחת ההלוגנים בטמפרטורת החדר. מהו הסדר הנכון של היסודות מבחינת ערך האנטרופיה המולרית שלהם?",
+                    type: "multiple",
+                    options: ["פלואור > כלור > ברום > יוד", "יוד > ברום > כלור > פלואור", "כלור > פלואור > ברום > יוד", "ברום > כלור > יוד > פלואור"],
+                    correctAnswer: 2,
+                    hasSecondQuestion: true,
+                    secondQuestion: "בקביעת מגמת האנטרופיה בהלוגנים השתמשנו בגורם/גורמים הבאים:",
+                    secondOptions: ["כללי: מצב צבירה של החומר", "נוזל: חוזק הקשרים הבין מולקולריים", "גז: גודל ענן האלקטרונים", "גז: מספר אטומים במולקולה", "גז: מספר סוגי האטומים במולקולה"],
+                    secondCorrectAnswers: [0, 2], // א,ג
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%234f46e5' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🧪%3C/text%3E%3C/svg%3E"
+                },
+                2: {
+                    code: "93605",
+                    emoji: "⚗️",
+                    locationImage: "https://i.imgur.com/4TWaKR8.jpg",
+                    question: "לפניכם 5 תגובות. באיזו/אילו תגובות יש ירידה באנטרופיה?",
+                    type: "multipleSelectLikeStation1",
+                    options: ["SO₃₍g₎ + H₂₍g₎ → SO₂₍g₎ + H₂O₍l₎", "C₁₂H₂₂O₁₁₍s₎ → C₁₂H₂₂O₁₁₍aq₎", "H₂S₍g₎ + O₂₍g₎ → H₂O₍g₎ + SO₂₍g₎", "S₈₍s₎ + O₂₍g₎ → SO₂₍g₎", "HgO₍s₎ → Hg₍l₎ + O₂₍g₎"],
+                    correctAnswers: [0, 2], // תגובות 1 ו-3
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%2306b6d4' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E⚗️%3C/text%3E%3C/svg%3E"
+                },
+                3: {
+                    code: "57184",
+                    emoji: "🧮",
+                    locationImage: "https://i.imgur.com/hkZfVEd.jpg",
+                    question: "חשבו את שינוי האנטרופיה בתגובה:\n\nCH₄₍g₎ + 2H₂O₍g₎ → CO₂₍g₎ + 4H₂₍g₎\n\nהיעזרו בנתונים:\nCO₂₍g₎: 213.6 J/mol·K\nH₂O₍g₎: 188.7 J/mol·K\nCH₄₍g₎: 186.2 J/mol·K\nH₂₍g₎: 130.6 J/mol·K",
+                    type: "open",
+                    correctAnswer: "172.4",
+                    alternativeAnswers: ["172.4 J", "172.4 ג'אול", "172.4 גאול", "172.4J", "172.4ג'אול"],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23f59e0b' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🧮%3C/text%3E%3C/svg%3E"
+                },
+                4: {
+                    code: "20469",
+                    emoji: "🧩",
+                    locationImage: "https://i.imgur.com/BXYwQ0U.jpg",
+                    question: "עליכם לפתור 5 חידות קצרות.\nמכל תשובה תיקחו את האות הנדרשת לפי ההנחיה.\nבסיום, סדרו את חמש האותיות שיצרתם כדי לקבל מילה הקשורה לכימיה.\n\n1. אני נמצא בחלב וטוב לעצמות ושיניים.\n   תשובה: _______\n   קחו את האות הראשונה.\n\n2. אני מדד לפיזור החלקיקים והאנרגיה בחומר.\n   תשובה: _______\n   קחו את האות השביעית.\n\n3. אני מצאתי את הכללים להתנהגות מערכת בשיווי משקל אחרי שמפריעים לה.\n   תשובה: _______\n   קחו את האות השנייה.\n\n4. אני מגיב עם חומצה.\n   תשובה: _______\n   קחו את האות הרביעית.\n\n5. אני מדד ליכולת של אטום למשוך אליו את אלקטרוני הקשר.\n   תשובה: _______\n   קחו את האות האחרונה.",
+                    type: "open",
+                    correctAnswer: "תסיסה",
+                    alternativeAnswers: ["תסיסה"],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%2310b981' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🧩%3C/text%3E%3C/svg%3E"
+                },
+                5: {
+                    code: "65831",
+                    emoji: "🌍",
+                    locationImage: "https://i.imgur.com/koc41uu.jpg",
+                    question: "נתונה תגובה:\n\n4NH₃₍g₎ + 5O₂₍g₎ → 4NO₍g₎ + 6H₂O₍l₎\n\nנתונים תרמודינמיים:\nNO₍g₎: S° = 210 J/K·mol\nH₂O₍l₎: S° = 70 J/K·mol\nO₂₍g₎: S° = 205 J/K·mol\nNH₃₍g₎: S° = 192 J/K·mol\n\nבתגובה בטמפרטורת החדר משתחררים 1192 קילוג'אול.\n\nחשבו את ערכו של ΔS°יקום",
+                    type: "open",
+                    correctAnswer: "3467",
+                    alternativeAnswers: ["3467 J", "3467 ג'אול", "3467 גאול", "3467J", "3467ג'אול"],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23dc2626' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🌍%3C/text%3E%3C/svg%3E"
+                },
+                6: {
+                    code: "39072",
+                    emoji: "🔥",
+                    locationImage: "https://i.imgur.com/cEiXw1S.jpg",
+                    question: "לפניכם ניסוח תגובת השריפה:\n\n2CH₃CHO₍g₎ + 5O₂₍g₎ → 4CO₂₍g₎ + 4H₂O₍g₎\n\nשינוי האנטרופיה של המערכת הוא 59 ג'אול לקלוין.\n\nלהלן מוצגים ערכי האנטרופיה התקנית המולרית עבור המגיבים והתוצרים בתגובה ביחידות של ג'אול/(קלוין*מול):\nH₂O₍g₎: 189\nCO₂₍g₎: 214\nO₂₍g₎: 205\nCH₃CHO₍g₎: X\n\nחשבו את הערך של האנטרופיה המולרית התקנית של CH₃CHO₍g₎",
+                    type: "open",
+                    correctAnswer: "264J/(K*mol)",
+                    alternativeAnswers: [
+                        "264J/(K*mol)", "264 J/(K*mol)", "264J/(K·mol)", "264 J/(K·mol)", 
+                        "264 ג'אול/(K*mol)", "264 גאול/(K*mol)", "264J/K*mol", "264 J/K*mol",
+                        "264J/mol*K", "264 J/mol*K", "264J/(mol*K)", "264 J/(mol*K)",
+                        "264J/Kmol", "264 J/Kmol", "264 ג'אול/K*mol", "264 גאול/K*mol",
+                        "264 ג'אול/mol*K", "264 גאול/mol*K", "264 ג'אול/(mol*K)", "264 גאול/(mol*K)",
+                        "264 ג'אול/Kmol", "264 גאול/Kmol", "264 joule/(K*mol)", "264 joule/K*mol",
+                        "264 joule/mol*K", "264 joule/(mol*K)", "264 joule/Kmol", "264joule/(K*mol)",
+                        "264joule/K*mol", "264joule/mol*K", "264joule/(mol*K)", "264joule/Kmol"
+                    ],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%239333ea' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🔥%3C/text%3E%3C/svg%3E"
+                },
+                7: {
+                    code: "84756",
+                    emoji: "🌡️",
+                    locationImage: "https://i.imgur.com/XkDwJPW.jpg",
+                    question: "כאשר מגיבים 160 גרם ברום עם אמוניה טמפרטורת הסביבה עולה ושינוי האנרגיה הוא 448 קילוג'אול.\n\n3Br₂₍l₎ + 8NH₃₍g₎ → 6NH₄Br₍s₎ + N₂₍g₎\n\nמה היה שינוי האנטרופיה של הסביבה, עבור התגובה הרשומה, אם ידוע שהתגובה התרחשה ב-102°C?",
+                    type: "open",
+                    correctAnswer: "3584J",
+                    alternativeAnswers: ["3584", "3,584J", "3,584", "3584 J", "3584 ג'אול", "3584 גאול", "3,584 J", "3,584 ג'אול", "3,584 גאול"],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23ec4899' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E🌡️%3C/text%3E%3C/svg%3E"
+                },
+                8: {
+                    code: "12593",
+                    emoji: "💰",
+                    locationImage: "https://i.imgur.com/mwY5XhF.jpg",
+                    question: "קבלו מהמורה דף עבודה.\nעבדו על פי ההנחיות בדף, והקלידו את התשובה המתקבלת.",
+                    type: "open",
+                    correctAnswer: "זהב",
+                    alternativeAnswers: ["זהב"],
+                    image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23fbbf24' width='400' height='300'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='60' font-family='Arial'%3E💰%3C/text%3E%3C/svg%3E"
+                }
+            }
+        };
+
+        // משתני המשחק
+        let currentTeam = '';
+        let currentStationIndex = 0;
+        let currentAttempts = 0;
+        let totalScore = 0;
+        let teamMembers = '';
+        let gameStartTime = null;
+        let gameTimer = null;
+
+        function updateGameTimer() {
+            if (!gameStartTime) return;
+            
+            const currentTime = new Date();
+            const elapsedTime = Math.floor((currentTime - gameStartTime) / 1000);
+            
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('gameTimer').textContent = formattedTime;
+        }
+
+        function startGameTimer() {
+            gameStartTime = new Date();
+            gameTimer = setInterval(updateGameTimer, 1000);
+        }
+
+        function stopGameTimer() {
+            if (gameTimer) {
+                clearInterval(gameTimer);
+                gameTimer = null;
+            }
+        }
+
+        function getElapsedTime() {
+            if (!gameStartTime) return "00:00";
+            
+            const currentTime = new Date();
+            const elapsedTime = Math.floor((currentTime - gameStartTime) / 1000);
+            
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = elapsedTime % 60;
+            
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function checkTeamMembers() {
+            const members = document.getElementById('teamMembers').value.trim();
+            const instructionsBtn = document.getElementById('instructionsBtn');
+            
+            if (members.length > 0) {
+                instructionsBtn.classList.remove('hidden');
+            } else {
+                instructionsBtn.classList.add('hidden');
+                document.getElementById('gameCodeSection').classList.add('hidden');
+            }
+        }
+
+        function showInstructions() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('instructionsScreen').classList.remove('hidden');
+        }
+
+        function closeInstructions() {
+            document.getElementById('instructionsScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('gameCodeSection').classList.remove('hidden');
+        }
+
+        function selectTeam(team) {
+            currentTeam = team;
+            document.getElementById('selectedTeamDisplay').textContent = `קבוצה ${team}`;
+            document.getElementById('teamSelectionScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function goBackToTeamSelection() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('teamSelectionScreen').classList.remove('hidden');
+            // איפוס השדות
+            document.getElementById('teamMembers').value = '';
+            document.getElementById('gameCode').value = '';
+            document.getElementById('instructionsBtn').classList.add('hidden');
+            document.getElementById('gameCodeSection').classList.add('hidden');
+        }
+
+        function startGame() {
+            const members = document.getElementById('teamMembers').value.trim();
+            const code = document.getElementById('gameCode').value.trim();
+
+            if (!members) {
+                showInlineMessage('gameCodeSection', 'אנא הכניסו את שמות חברי הקבוצה', 'red');
+                return;
+            }
+
+            if (code !== '2611') {
+                showInlineMessage('gameCodeSection', 'קוד משחק שגוי! נסו שוב.', 'red');
+                return;
+            }
+
+            teamMembers = members;
+            
+            document.getElementById('teamName').textContent = `קבוצה ${currentTeam}`;
+            document.getElementById('teamMembersDisplay').textContent = members;
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            startGameTimer();
+            loadCurrentStation();
+        }
+
+        function showInlineMessage(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            
+            // הסרת הודעה קודמת
+            const existingMessage = container.querySelector('.inline-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // יצירת הודעה חדשה
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `inline-message mt-3 p-3 rounded-xl text-center font-bold ${type === 'red' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // הסרת ההודעה אחרי 3 שניות
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+
+        function loadCurrentStation() {
+            const stationOrder = gameData.stationOrders[currentTeam];
+            const stationNumber = stationOrder[currentStationIndex];
+            const station = gameData.stations[stationNumber];
+            
+            document.getElementById('stationEmoji').textContent = station.emoji;
+            document.getElementById('stationCounter').textContent = `${currentStationIndex + 1}/8`;
+            document.getElementById('currentScore').textContent = totalScore;
+            
+            // הצגת תמונת המיקום אם קיימת
+            const locationImage = document.getElementById('stationLocationImage');
+            const locationInstruction = document.getElementById('locationInstruction');
+            if (station.locationImage) {
+                locationImage.src = station.locationImage;
+                locationImage.style.display = 'block';
+                locationInstruction.style.display = 'block';
+                locationImage.onerror = function() {
+                    this.style.display = 'none';
+                    locationInstruction.style.display = 'none';
+                };
+            } else {
+                locationImage.style.display = 'none';
+                locationInstruction.style.display = 'none';
+            }
+            
+            // איפוס מצב התחנה
+            document.getElementById('stationCodeInput').classList.remove('hidden');
+            document.getElementById('stationQuestion').classList.add('hidden');
+            document.getElementById('stationCode').value = '';
+            currentAttempts = 0;
+            
+            // איפוס משתני תחנה 1
+            currentQuestionInStation = 1;
+            selectedSecondAnswers = [];
+        }
+
+        function checkStationCode() {
+            const enteredCode = document.getElementById('stationCode').value.trim();
+            const stationOrder = gameData.stationOrders[currentTeam];
+            const stationNumber = stationOrder[currentStationIndex];
+            const correctCode = gameData.stations[stationNumber].code;
+
+            if (enteredCode === correctCode) {
+                document.getElementById('stationCodeInput').classList.add('hidden');
+                document.getElementById('stationQuestion').classList.remove('hidden');
+                loadStationQuestion(stationNumber);
+            } else {
+                // הצגת הודעת שגיאה ידידותית במקום alert
+                const feedback = document.createElement('div');
+                feedback.className = 'mt-4 p-3 bg-red-100 text-red-800 rounded-xl text-center font-bold';
+                feedback.textContent = 'קוד שגוי! בדקו שוב את השלט בתחנה.';
+                
+                // הסרת הודעת שגיאה קודמת אם קיימת
+                const existingFeedback = document.querySelector('#stationCodeInput .bg-red-100');
+                if (existingFeedback) {
+                    existingFeedback.remove();
+                }
+                
+                document.getElementById('stationCodeInput').appendChild(feedback);
+                
+                // הסרת ההודעה אחרי 3 שניות
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        feedback.remove();
+                    }
+                }, 3000);
+            }
+        }
+
+        function loadStationQuestion(stationNumber) {
+            const station = gameData.stations[stationNumber];
+            
+            document.getElementById('stationImage').src = station.image;
+            document.getElementById('questionText').textContent = station.question;
+            
+            if (station.type === 'multiple') {
+                document.getElementById('multipleChoice').classList.remove('hidden');
+                document.getElementById('openAnswer').classList.add('hidden');
+                
+                const buttons = document.querySelectorAll('.answer-btn');
+                buttons.forEach((btn, index) => {
+                    btn.textContent = station.options[index];
+                    btn.classList.remove('bg-green-200', 'bg-red-200', 'bg-purple-200');
+                    btn.classList.add('bg-gray-100');
+                });
+            } else if (station.type === 'multipleSelect' || station.type === 'multipleSelectLikeStation1') {
+                document.getElementById('multipleChoice').classList.remove('hidden');
+                document.getElementById('openAnswer').classList.add('hidden');
+                
+                if (station.type === 'multipleSelectLikeStation1') {
+                    // For station 2, create 5 buttons for the chemical equations
+                    const buttonsContainer = document.getElementById('multipleChoice');
+                    buttonsContainer.innerHTML = '';
+                    
+                    // Shuffle options for different teams
+                    const shuffledOptions = shuffleOptionsForTeam(station.options, currentTeam);
+                    
+                    shuffledOptions.forEach((option, index) => {
+                        const button = document.createElement('button');
+                        button.className = 'answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200 mb-2';
+                        button.textContent = option;
+                        button.onclick = () => toggleMultipleAnswer(index);
+                        button.disabled = false;
+                        buttonsContainer.appendChild(button);
+                    });
+                } else {
+                    // Original multipleSelect logic
+                    const shuffledOptions = shuffleOptionsForTeam(station.options, currentTeam);
+                    const buttons = document.querySelectorAll('.answer-btn');
+                    buttons.forEach((btn, index) => {
+                        if (index < shuffledOptions.length) {
+                            btn.textContent = shuffledOptions[index];
+                            btn.classList.remove('bg-green-200', 'bg-red-200', 'bg-purple-200');
+                            btn.classList.add('bg-gray-100');
+                            btn.style.display = 'block';
+                        } else {
+                            btn.style.display = 'none';
+                        }
+                    });
+                }
+                
+                // Reset selected answers for multiple select
+                selectedMultipleAnswers = [];
+            } else {
+                document.getElementById('multipleChoice').classList.add('hidden');
+                document.getElementById('openAnswer').classList.remove('hidden');
+                document.getElementById('openAnswerInput').value = '';
+                document.getElementById('openAnswerInput').disabled = false;
+            }
+            
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('nextButton').classList.add('hidden');
+        }
+
+        let selectedAnswerIndex = -1;
+        let selectedMultipleAnswers = [];
+        let shuffledOptionsMap = {};
+
+        function shuffleOptionsForTeam(options, team) {
+            const key = `${team}`;
+            if (!shuffledOptionsMap[key]) {
+                const shuffled = [...options];
+                // Simple shuffle based on team
+                const teamIndex = gameData.teams.indexOf(team);
+                for (let i = 0; i < teamIndex; i++) {
+                    shuffled.push(shuffled.shift());
+                }
+                shuffledOptionsMap[key] = shuffled;
+            }
+            return shuffledOptionsMap[key];
+        }
+
+        function selectAnswer(index) {
+            const stationOrder = gameData.stationOrders[currentTeam];
+            const stationNumber = stationOrder[currentStationIndex];
+            const station = gameData.stations[stationNumber];
+            
+            if (station.type === 'multipleSelect') {
+                // Toggle selection for multiple select
+                const buttons = document.querySelectorAll('.answer-btn');
+                const button = buttons[index];
+                
+                if (selectedMultipleAnswers.includes(index)) {
+                    // Remove selection
+                    selectedMultipleAnswers = selectedMultipleAnswers.filter(i => i !== index);
+                    button.classList.remove('bg-purple-200');
+                    button.classList.add('bg-gray-100');
+                } else {
+                    // Add selection
+                    selectedMultipleAnswers.push(index);
+                    button.classList.remove('bg-gray-100');
+                    button.classList.add('bg-purple-200');
+                }
+            } else {
+                // Single selection for regular multiple choice
+                selectedAnswerIndex = index;
+                const buttons = document.querySelectorAll('.answer-btn');
+                buttons.forEach((btn, i) => {
+                    if (i === index) {
+                        btn.classList.remove('bg-gray-100');
+                        btn.classList.add('bg-purple-200');
+                    } else {
+                        btn.classList.remove('bg-purple-200');
+                        btn.classList.add('bg-gray-100');
+                    }
+                });
+            }
+        }
+
+        // משתנה לעקוב אחר השאלה הנוכחית בתחנה 1
+        let currentQuestionInStation = 1;
+        let selectedSecondAnswers = [];
+
+        // פונקציה לשליחת נתונים לגיליון Google Sheets
+        function sendToGoogleSheets(stationNum, questionNum, attemptNum, userAnswer, pointsEarned) {
+            const data = {
+                team: currentTeam,
+                members: teamMembers,
+                station: stationNum,
+                question: questionNum,
+                attempt: attemptNum,
+                answer: userAnswer,
+                score: pointsEarned,
+                time: getElapsedTime()
+            };
+
+            fetch("https://script.google.com/macros/s/AKfycbzt2e1MOoXAcRrOarBYyEKoxM-P66jE7L1sUk6_d2mwyRVkTYxZMZcBTWh0l9oGO7-w/exec", {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).catch(error => {
+                console.log('שגיאה בשליחה לגיליון:', error);
+            });
+        }
+
+        function submitAnswer() {
+            const stationOrder = gameData.stationOrders[currentTeam];
+            const stationNumber = stationOrder[currentStationIndex];
+            const station = gameData.stations[stationNumber];
+            
+            // טיפול מיוחד בתחנה 1 עם שתי שאלות
+            if (stationNumber === 1 && currentQuestionInStation === 1) {
+                return handleFirstQuestionStation1(station);
+            } else if (stationNumber === 1 && currentQuestionInStation === 2) {
+                return handleSecondQuestionStation1(station);
+            }
+            
+            let userAnswer;
+            let isCorrect = false;
+            let userAnswerText = '';
+
+            if (station.type === 'multiple') {
+                if (selectedAnswerIndex === -1) {
+                    showFeedbackMessage('אנא בחרו תשובה', 'red');
+                    return;
+                }
+                userAnswer = selectedAnswerIndex;
+                userAnswerText = station.options[selectedAnswerIndex];
+                isCorrect = userAnswer === station.correctAnswer;
+            } else if (station.type === 'multipleSelect' || station.type === 'multipleSelectLikeStation1') {
+                if (selectedMultipleAnswers.length === 0) {
+                    showFeedbackMessage('אנא בחרו לפחות תשובה אחת', 'red');
+                    return;
+                }
+                
+                // Map selected indices to original answer indices
+                const shuffledOptions = shuffleOptionsForTeam(station.options, currentTeam);
+                const originalIndices = selectedMultipleAnswers.map(shuffledIndex => {
+                    const selectedText = shuffledOptions[shuffledIndex];
+                    return station.options.indexOf(selectedText);
+                });
+                
+                // יצירת טקסט התשובה
+                userAnswerText = selectedMultipleAnswers.map(index => shuffledOptions[index]).join(', ');
+                
+                // Check if selected answers match correct answers
+                const correctAnswers = station.correctAnswers.sort();
+                const userAnswers = originalIndices.sort();
+                isCorrect = JSON.stringify(correctAnswers) === JSON.stringify(userAnswers);
+            } else {
+                userAnswerText = document.getElementById('openAnswerInput').value.trim();
+                if (!userAnswerText) {
+                    showFeedbackMessage('יש להקליד את התשובה', 'red');
+                    return;
+                }
+                // בדיקת תשובות אלטרנטיביות
+                isCorrect = userAnswerText.toLowerCase() === station.correctAnswer.toLowerCase();
+                if (!isCorrect && station.alternativeAnswers) {
+                    isCorrect = station.alternativeAnswers.some(alt => 
+                        userAnswerText.toLowerCase() === alt.toLowerCase()
+                    );
+                }
+            }
+
+            currentAttempts++;
+            
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden');
+
+            let pointsEarned = 0;
+
+            if (isCorrect) {
+                const basePoints = 100; // ניקוד בסיס לכל שאלה
+                if (currentAttempts === 1) pointsEarned = Math.round(basePoints * 1.0); // 100%
+                else if (currentAttempts === 2) pointsEarned = Math.round(basePoints * 0.78); // 78%
+                else if (currentAttempts === 3) pointsEarned = Math.round(basePoints * 0.5); // 50%
+
+                totalScore += pointsEarned;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-green-100 text-green-800 correct-answer';
+                feedbackDiv.textContent = `🎉 נכון! זכיתם ב-${pointsEarned} נקודות`;
+                
+                document.getElementById('currentScore').textContent = totalScore;
+                document.getElementById('nextButton').classList.remove('hidden');
+                
+                // הסתרת כפתורי התשובות
+                if (station.type === 'multiple' || station.type === 'multipleSelect' || station.type === 'multipleSelectLikeStation1') {
+                    const buttons = document.querySelectorAll('.answer-btn');
+                    buttons.forEach(btn => btn.disabled = true);
+                } else {
+                    document.getElementById('openAnswerInput').disabled = true;
+                }
+            } else {
+                // הורדת נקודות על תשובה שגויה
+                const penaltyPoints = 10;
+                totalScore = Math.max(0, totalScore - penaltyPoints); // לא לרדת מתחת ל-0
+                pointsEarned = -penaltyPoints; // ניקוד שלילי
+                document.getElementById('currentScore').textContent = totalScore;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-red-100 text-red-800 wrong-answer';
+                if (currentAttempts >= 3) {
+                    let correctAnswerText = '';
+                    if (station.type === 'multiple') {
+                        correctAnswerText = station.options[station.correctAnswer];
+                    } else if (station.type === 'multipleSelect' || station.type === 'multipleSelectLikeStation1') {
+                        const correctOptions = station.correctAnswers.map(i => station.options[i]);
+                        correctAnswerText = correctOptions.join(', ');
+                    } else {
+                        correctAnswerText = station.correctAnswer;
+                    }
+                    feedbackDiv.textContent = `❌ לא נכון. התשובה הנכונה: ${correctAnswerText}. לא קיבלתם ניקוד על שאלה זו.`;
+                    document.getElementById('nextButton').classList.remove('hidden');
+                } else {
+                    feedbackDiv.textContent = `❌ לא נכון. הורדו ${penaltyPoints} נקודות. נסו שוב! (ניסיון ${currentAttempts}/3)`;
+                }
+            }
+
+            // שליחה לגיליון Google Sheets
+            const questionNumber = (stationNumber === 1 && station.hasSecondQuestion) ? 1 : 1; // רוב התחנות יש שאלה אחת
+            sendToGoogleSheets(currentStationIndex + 1, questionNumber, currentAttempts, userAnswerText, pointsEarned);
+        }
+
+        function showFeedbackMessage(message, type) {
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden');
+            feedbackDiv.className = `mt-6 p-4 rounded-xl text-center font-bold ${type === 'red' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`;
+            feedbackDiv.textContent = message;
+            
+            // הסרת ההודעה אחרי 3 שניות
+            setTimeout(() => {
+                feedbackDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        function handleFirstQuestionStation1(station) {
+            if (selectedAnswerIndex === -1) {
+                showFeedbackMessage('אנא בחרו תשובה', 'red');
+                return;
+            }
+
+            currentAttempts++;
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden');
+
+            const userAnswerText = station.options[selectedAnswerIndex];
+            let pointsEarned = 0;
+
+            if (selectedAnswerIndex === station.correctAnswer) {
+                const basePoints = 50; // 50 נקודות בסיס לשאלה ראשונה
+                if (currentAttempts === 1) pointsEarned = Math.round(basePoints * 1.0); // 100%
+                else if (currentAttempts === 2) pointsEarned = Math.round(basePoints * 0.78); // 78%
+                else if (currentAttempts === 3) pointsEarned = Math.round(basePoints * 0.5); // 50%
+
+                totalScore += pointsEarned;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-green-100 text-green-800 correct-answer';
+                feedbackDiv.textContent = `🎉 נכון! זכיתם ב-${pointsEarned} נקודות. עוברים לשאלה השנייה...`;
+                
+                document.getElementById('currentScore').textContent = totalScore;
+                
+                // שליחה לגיליון Google Sheets
+                sendToGoogleSheets(currentStationIndex + 1, 1, currentAttempts, userAnswerText, pointsEarned);
+                
+                // מעבר לשאלה השנייה
+                setTimeout(() => {
+                    currentQuestionInStation = 2;
+                    currentAttempts = 0;
+                    loadSecondQuestionStation1(station);
+                }, 2000);
+                
+            } else {
+                // הורדת נקודות על תשובה שגויה
+                const penaltyPoints = 10;
+                totalScore = Math.max(0, totalScore - penaltyPoints);
+                pointsEarned = -penaltyPoints;
+                document.getElementById('currentScore').textContent = totalScore;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-red-100 text-red-800 wrong-answer';
+                
+                // שליחה לגיליון Google Sheets
+                sendToGoogleSheets(currentStationIndex + 1, 1, currentAttempts, userAnswerText, pointsEarned);
+                
+                if (currentAttempts >= 3) {
+                    feedbackDiv.textContent = `❌ לא נכון. התשובה הנכונה: ${station.options[station.correctAnswer]}. לא קיבלתם ניקוד על שאלה זו. עוברים לשאלה השנייה...`;
+                    setTimeout(() => {
+                        currentQuestionInStation = 2;
+                        currentAttempts = 0;
+                        loadSecondQuestionStation1(station);
+                    }, 3000);
+                } else {
+                    feedbackDiv.textContent = `❌ לא נכון. הורדו ${penaltyPoints} נקודות. נסו שוב! (ניסיון ${currentAttempts}/3)`;
+                }
+            }
+        }
+
+        function loadSecondQuestionStation1(station) {
+            document.getElementById('questionText').textContent = station.secondQuestion;
+            document.getElementById('feedback').classList.add('hidden');
+            
+            // הצגת 5 אפשרויות לשאלה השנייה
+            const buttonsContainer = document.getElementById('multipleChoice');
+            buttonsContainer.innerHTML = '';
+            
+            station.secondOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn w-full p-4 text-right bg-gray-100 hover:bg-purple-100 rounded-xl transition-all duration-200 mb-2';
+                button.textContent = option;
+                button.onclick = () => toggleSecondAnswer(index);
+                button.disabled = false;
+                buttonsContainer.appendChild(button);
+            });
+            
+            selectedSecondAnswers = [];
+        }
+
+        function toggleSecondAnswer(index) {
+            const buttons = document.querySelectorAll('.answer-btn');
+            const button = buttons[index];
+            
+            if (selectedSecondAnswers.includes(index)) {
+                // הסרת הבחירה
+                selectedSecondAnswers = selectedSecondAnswers.filter(i => i !== index);
+                button.classList.remove('bg-purple-200');
+                button.classList.add('bg-gray-100');
+            } else {
+                // הוספת הבחירה
+                selectedSecondAnswers.push(index);
+                button.classList.remove('bg-gray-100');
+                button.classList.add('bg-purple-200');
+            }
+        }
+
+        function toggleMultipleAnswer(index) {
+            const buttons = document.querySelectorAll('.answer-btn');
+            const button = buttons[index];
+            
+            if (selectedMultipleAnswers.includes(index)) {
+                // הסרת הבחירה
+                selectedMultipleAnswers = selectedMultipleAnswers.filter(i => i !== index);
+                button.classList.remove('bg-purple-200');
+                button.classList.add('bg-gray-100');
+            } else {
+                // הוספת הבחירה
+                selectedMultipleAnswers.push(index);
+                button.classList.remove('bg-gray-100');
+                button.classList.add('bg-purple-200');
+            }
+        }
+
+        function handleSecondQuestionStation1(station) {
+            if (selectedSecondAnswers.length === 0) {
+                showFeedbackMessage('אנא בחרו לפחות תשובה אחת', 'red');
+                return;
+            }
+
+            currentAttempts++;
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.classList.remove('hidden');
+
+            // יצירת טקסט התשובה
+            const userAnswerText = selectedSecondAnswers.map(index => station.secondOptions[index]).join(', ');
+
+            // בדיקה אם הבחירות נכונות (צריך לבחור בדיוק את התשובות הנכונות)
+            const correctAnswers = station.secondCorrectAnswers.sort();
+            const userAnswers = selectedSecondAnswers.sort();
+            const isCorrect = JSON.stringify(correctAnswers) === JSON.stringify(userAnswers);
+
+            let pointsEarned = 0;
+
+            if (isCorrect) {
+                const basePoints = 50; // 50 נקודות בסיס לשאלה שנייה
+                if (currentAttempts === 1) pointsEarned = Math.round(basePoints * 1.0); // 100%
+                else if (currentAttempts === 2) pointsEarned = Math.round(basePoints * 0.78); // 78%
+                else if (currentAttempts === 3) pointsEarned = Math.round(basePoints * 0.5); // 50%
+
+                totalScore += pointsEarned;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-green-100 text-green-800 correct-answer';
+                feedbackDiv.textContent = `🎉 נכון! זכיתם ב-${pointsEarned} נקודות`;
+                
+                document.getElementById('currentScore').textContent = totalScore;
+                document.getElementById('nextButton').classList.remove('hidden');
+                
+                const buttons = document.querySelectorAll('.answer-btn');
+                buttons.forEach(btn => btn.disabled = true);
+                
+            } else {
+                // הורדת נקודות על תשובה שגויה
+                const penaltyPoints = 10;
+                totalScore = Math.max(0, totalScore - penaltyPoints);
+                pointsEarned = -penaltyPoints;
+                document.getElementById('currentScore').textContent = totalScore;
+                
+                feedbackDiv.className = 'mt-6 p-4 rounded-xl text-center font-bold bg-red-100 text-red-800 wrong-answer';
+                if (currentAttempts >= 3) {
+                    const correctOptions = station.secondCorrectAnswers.map(i => station.secondOptions[i]).join(', ');
+                    feedbackDiv.textContent = `❌ לא נכון. התשובות הנכונות: ${correctOptions}. לא קיבלתם ניקוד על שאלה זו.`;
+                    document.getElementById('nextButton').classList.remove('hidden');
+                } else {
+                    feedbackDiv.textContent = `❌ לא נכון. הורדו ${penaltyPoints} נקודות. נסו שוב! (ניסיון ${currentAttempts}/3)`;
+                }
+            }
+
+            // שליחה לגיליון Google Sheets
+            sendToGoogleSheets(currentStationIndex + 1, 2, currentAttempts, userAnswerText, pointsEarned);
+        }
+
+        function nextStation() {
+            currentStationIndex++;
+            
+            if (currentStationIndex >= 8) {
+                showEndScreen();
+            } else {
+                loadCurrentStation();
+            }
+        }
+
+        function showEndScreen() {
+            stopGameTimer();
+            
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.remove('hidden');
+            
+            document.getElementById('congratsMessage').textContent = `כל הכבוד קבוצה ${currentTeam}!`;
+            document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('finalTime').textContent = getElapsedTime();
+            
+            let message = '';
+            if (totalScore >= 700) {
+                message = 'ביצוע מעולה! אתם צוות מנצח! 🏆';
+            } else if (totalScore >= 500) {
+                message = 'עבודה טובה! הצלחתם במשימה! 👏';
+            } else if (totalScore >= 300) {
+                message = 'לא רע בכלל! יש מקום לשיפור. 💪';
+            } else {
+                message = 'המשיכו להתאמן, בפעם הבאה תצליחו יותר! 🌟';
+            }
+            
+            document.getElementById('finalMessage').textContent = message;
+        }
+
+        function restartGame() {
+            // עצירת השעון
+            stopGameTimer();
+            
+            // איפוס כל המשתנים
+            currentTeam = '';
+            currentStationIndex = 0;
+            currentAttempts = 0;
+            totalScore = 0;
+            teamMembers = '';
+            gameStartTime = null;
+            selectedAnswerIndex = -1;
+            selectedMultipleAnswers = [];
+            shuffledOptionsMap = {};
+            
+            // איפוס השדות
+            document.getElementById('teamMembers').value = '';
+            document.getElementById('gameCode').value = '';
+            document.getElementById('gameTimer').textContent = '00:00';
+            
+            // חזרה למסך בחירת קבוצה
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('teamSelectionScreen').classList.remove('hidden');
+        }
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9943f33ee455c233',t:'MTc2MTQxODc1Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
